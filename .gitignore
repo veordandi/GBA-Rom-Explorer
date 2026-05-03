@@ -1,0 +1,6 @@
+docs/*
+*.d
+*.timestamp
+/target/
+/crates/fe-nmm/target
+*.DS_Store
