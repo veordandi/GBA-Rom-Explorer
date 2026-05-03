@@ -41,19 +41,18 @@ impl From<Error> for NmmParseError {
     }
 }
 
-pub fn parse_table_path(path: &str) -> Result<NmmTable, NmmParseError> {
-    // read lines in one by one
+// There is almost certainly a faster way to do this. let's do it the fun way first and then clean it up later
+pub fn parse_table_path(path: &std::path::Path) -> Result<NmmTable, NmmParseError> {
     let mut table = NmmTable::new();
 
     let mut line_number = 0;
-    let mut read_header = false;
-    let mut read_body = false;
+    let mut reading_header = false;
+    let mut reading_body = false;
 
+    //TODO: Also need to do some work to implement the error enums created above so we have good error handling
     'line_read: for line in read_to_string(path).unwrap().lines() {
-        if read_header == true {
-            // The Headers will _always_ have the same structure. There's almost certainly a clearner way to do this,
-            // but for no we're going to get a working implementation, and clean it up w/better error handlng later
-            //
+        //TODO: Need to know what the read line will do with an empty line. Read it? Move on? Who knows. (probably read it)
+        if reading_header == true {
             /* The header we're parsing will look like this:
                 1       -> indicator that header has begun
                 FE8 Spell Association Editor by Vennobennu  -> label
@@ -76,8 +75,8 @@ pub fn parse_table_path(path: &str) -> Result<NmmTable, NmmParseError> {
                 }
                 _ => {
                     line_number = 0;
-                    read_header = false;
-                    read_body = true;
+                    reading_header = false;
+                    reading_body = true;
                     continue 'line_read;
                 }
             }
@@ -91,29 +90,48 @@ pub fn parse_table_path(path: &str) -> Result<NmmTable, NmmParseError> {
            NDHU        -> Type of values (dropdown/input, hex/dec)
            Item List.txt   -> txt file name (Can be NULL)
         */
-        if read_body {
+        if reading_body {
             match line_number {
-                0 => {}
+                0 => {
+                    table.fields.push(NmmField::new());
+                    table.fields.last_mut().unwrap().label = line.to_string();
+                }
+                1 => {
+                    table.fields.last_mut().unwrap().offset = line.parse::<u32>().unwrap();
+                }
+                2 => {
+                    table.fields.last_mut().unwrap().width = line.parse::<u8>().unwrap();
+                }
+                3 => match line {
+                    // Checking whether value is hex or decimal
+                    "NDDU" | "NEDU" | "NEDS" => {
+                        table.fields.last_mut().unwrap().kind = NmmFieldKind::Decimal
+                    }
+                    _ => table.fields.last_mut().unwrap().kind = NmmFieldKind::Hex,
+                },
+                4 => {
+                    // We'll want to parse the txt file here if not null.
+                    line_number = 0;
+                }
                 _ => {
                     line_number = 0;
-                    read_body = false;
                 }
             }
         }
 
-        if line.starts_with("1") && !read_header {
-            read_header = true;
+        if line.starts_with("1") && !reading_header {
+            reading_header = true;
         }
     }
 
     Ok(table)
 }
 
-pub fn parse_txt_file(input: &str) -> Result<EnumTable, NmmParseError> {
-    // for the given str ptr, read file w/name.
-    // Note that based on what we have in enums.rs, the file will
-    // either be a plain list, or look like "0x00 Off"
-}
+// pub fn parse_txt_file(input: &str) -> Result<EnumTable, NmmParseError> {
+// for the given str ptr, read file w/name.
+// Note that based on what we have in enums.rs, the file will
+// either be a plain list, or look like "0x00 Off"
+// }
 
 // pub fn parse_enum_table(input: &str) -> Result<EnumTable, NmmParseError>;
 // pub fn parse_entry_names(input: &str) -> Result<EntryNames, NmmParseError>;

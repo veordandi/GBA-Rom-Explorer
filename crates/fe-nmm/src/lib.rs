@@ -1,5 +1,5 @@
 // Just here for re-export
 mod enums;
-mod parse;
+pub mod parse;
 mod registry;
 mod schema;
