@@ -1,4 +1,8 @@
+use crate::enums::*;
 use crate::schema::*;
+use std::fs::read_to_string;
+use std::io::Error;
+use thiserror;
 
 // Error enums that we'll be using in our parsing functions when things go wrong
 #[derive(Debug, thiserror::Error)]
@@ -27,59 +31,118 @@ pub enum NmmParseError {
     },
 }
 
-// Parses regular nmm module given a string input
-pub fn parse_table(input: &str) -> Result<NmmTable, NmmParseError>;
+// Allows us to translate err:Error into NmmParseError
+impl From<Error> for NmmParseError {
+    fn from(err: Error) -> Self {
+        NmmParseError::Io {
+            path: std::path::PathBuf::from(""),
+            source: err.into(),
+        }
+    }
+}
 
+// There is almost certainly a faster way to do this. let's do it the fun way first and then clean it up later
 pub fn parse_table_path(path: &std::path::Path) -> Result<NmmTable, NmmParseError> {
-    // read lines in one by one
-    let table = NmmTable::new();
-
-    //TODO: Somehow we need an Option<std::path::PathBuf>
-    // table.source_path = filename.to_string();
+    let mut table = NmmTable::new();
 
     let mut line_number = 0;
-    let mut read_header = false;
-    let mut read_body = false;
+    let mut reading_header = false;
+    let mut reading_body = false;
 
-    'line_read: for line in read_to_string(filename).unwrap().lines() {
-        if read_header == true {
+    //TODO: Also need to do some work to implement the error enums created above so we have good error handling
+    'line_read: for line in read_to_string(path).unwrap().lines() {
+        // If we have an empty line, don't bother reading it, just move on to the next section
+        if line == "" {
+            line_number = 0;
+            continue 'line_read;
+        }
+
+        if line.starts_with("1") && !reading_header && !reading_body {
+            reading_header = true;
+            continue 'line_read;
+        }
+
+        if reading_header == true {
+            line_number += 1;
+            /* The header we're parsing will look like this:
+                1       -> indicator that header has begun
+                FE8 Spell Association Editor by Vennobennu  -> label
+                0x8AFBD8 -> offset
+                161     -> entry count
+                16      -> entry byte size
+                NULL    -> Type of values (dropdown/input, hex/dec)
+                NULL    -> txt file name
+            */
             match line_number {
-                0 => table.title = line.to_string(),
-                1 => table.offset = line.to_u32().unwrap(),
-                2 => table.entry_count = line.to_u32().unwrap(),
-                3 => table.entry_size = line.to_u32().unwrap(),
-                4 => {
+                1 => table.title = line.to_string(),
+                2 => {
+                    let cleaned_hex = line.strip_prefix("0x").unwrap_or(line);
+                    table.offset = u32::from_str_radix(cleaned_hex, 16).unwrap();
+                }
+                3 => table.entry_count = line.parse::<u32>().unwrap(),
+                4 => table.entry_size = line.parse::<u32>().unwrap(),
+                5 => {
                     if line.to_string() != "NULL" {
-                        //TODO: HAHAHA FUCK YOU HAVE FUN PARSING THE TXT
-                        // parse_txt_file(&line.to_string())
+                        //TODO: At this point we need to parse the txt files
+                        // parse_txt_file(line)
                     }
                 }
                 _ => {
                     line_number = 0;
-                    read_header = false;
-                    read_body = true;
+                    reading_header = false;
+                    reading_body = true;
                     continue 'line_read;
                 }
             }
         }
 
-        if (read_body) {
+        // Parsing a generic body entry for the .nmm file
+        /* Formatted like so:
+           Weapon      -> Label
+           0           -> Offset
+           2           -> width
+           NDHU        -> Type of values (dropdown/input, hex/dec)
+           Item List.txt   -> txt file name (Can be NULL)
+        */
+        if reading_body {
+            line_number += 1;
             match line_number {
-                0 => {}
+                1 => {
+                    table.fields.push(NmmField::new());
+                    table.fields.last_mut().unwrap().label = line.to_string();
+                }
+                2 => {
+                    table.fields.last_mut().unwrap().offset = line.parse::<u32>().unwrap();
+                }
+                3 => {
+                    table.fields.last_mut().unwrap().width = line.parse::<u8>().unwrap();
+                }
+                4 => match line {
+                    // Checking whether value is hex or decimal
+                    "NDDU" | "NEDU" | "NEDS" => {
+                        table.fields.last_mut().unwrap().kind = NmmFieldKind::Decimal
+                    }
+                    _ => table.fields.last_mut().unwrap().kind = NmmFieldKind::Hex,
+                },
+                5 => {
+                    // We'll want to parse the txt file here if not null.
+                }
                 _ => {
                     line_number = 0;
-                    read_body = false;
+                    continue 'line_read;
                 }
             }
         }
-
-        if line.starts_with("1") && !read_header {
-            read_header = true;
-        }
     }
 
-    table
+    Ok(table)
 }
 
-pub fn parse_enum_table(input: &str) -> Result<EnumTable, NmmParseError>;
-pub fn parse_entry_names(input: &str) -> Result<EntryNames, NmmParseError>;
+// pub fn parse_txt_file(input: &str) -> Result<EnumTable, NmmParseError> {
+// for the given str ptr, read file w/name.
+// Note that based on what we have in enums.rs, the file will
+// either be a plain list, or look like "0x00 Off"
+// }
+
+// pub fn parse_enum_table(input: &str) -> Result<EnumTable, NmmParseError>;
+// pub fn parse_entry_names(input: &str) -> Result<EntryNames, NmmParseError>;

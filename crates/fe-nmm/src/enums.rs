@@ -2,20 +2,17 @@
 // Mainly correlates to the txt files
 
 // values for nmm entries, either straight dec/hex entry or dec/hex dropdown
+// Note that there are 5 values in the nmm files for this. NDDU/NDHU/NEDU/NEDS/NEHU
+// All of these come down to either a Hex or Decimal value, and will either be free input (no txt)
+// or a drowpdown that has available options stored in the correlating txt file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum NmmFieldKind {
-    Editbox { display: NumDisplay, signed: bool },
-    Dropdown { display: NumDisplay },
-}
-
-// Enum for value type field type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub enum NumDisplay {
     Hex,
     Decimal,
 }
 
-// tracks txt files that have hexes and labels
+// tracks txt files that have hexes as well as labels.
+// hex values stored as the key in the BTreeMap, with the label as the value.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct EnumTable {
     pub declared_count: u32,

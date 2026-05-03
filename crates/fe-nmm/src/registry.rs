@@ -1,4 +1,7 @@
-use crate::enums::{EnumRef, EnumTable};
+use crate::enums::*;
+use crate::schema::*;
+use std::collections::HashMap;
+use std::path::PathBuf;
 
 // This is how we're storing the nightmare + txt files throughout the project
 pub struct NmmRegistry {
@@ -8,8 +11,8 @@ pub struct NmmRegistry {
 }
 
 impl NmmRegistry {
-    pub fn load_dir(root: &Path) -> Result<Self, NmmParseError>;
-    pub fn tables(&self) -> &[NmmTable];
-    pub fn lookup_enum(&self, r: &EnumRef) -> Result<&EnumTable, NmmParseError>;
-    pub fn lookup_names(&self, r: &EnumRef) -> Result<&EntryNames, NmmParseError>;
+    // pub fn load_dir(root: &Path) -> Result<Self, NmmParseError>;
+    // pub fn tables(&self) -> &[NmmTable];
+    // pub fn lookup_enum(&self, r: &EnumRef) -> Result<&EnumTable, NmmParseError>;
+    // pub fn lookup_names(&self, r: &EnumRef) -> Result<&EntryNames, NmmParseError>;
 }
