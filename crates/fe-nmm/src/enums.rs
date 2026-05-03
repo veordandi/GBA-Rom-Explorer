@@ -4,13 +4,6 @@
 // values for nmm entries, either straight dec/hex entry or dec/hex dropdown
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum NmmFieldKind {
-    Editbox { display: NumDisplay, signed: bool },
-    Dropdown { display: NumDisplay },
-}
-
-// Enum for value type field type
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub enum NumDisplay {
     Hex,
     Decimal,
 }
