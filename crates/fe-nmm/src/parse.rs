@@ -51,8 +51,19 @@ pub fn parse_table_path(path: &std::path::Path) -> Result<NmmTable, NmmParseErro
 
     //TODO: Also need to do some work to implement the error enums created above so we have good error handling
     'line_read: for line in read_to_string(path).unwrap().lines() {
-        //TODO: Need to know what the read line will do with an empty line. Read it? Move on? Who knows. (probably read it)
+        // If we have an empty line, don't bother reading it, just move on to the next section
+        if line == "" {
+            line_number = 0;
+            continue 'line_read;
+        }
+
+        if line.starts_with("1") && !reading_header && !reading_body {
+            reading_header = true;
+            continue 'line_read;
+        }
+
         if reading_header == true {
+            line_number += 1;
             /* The header we're parsing will look like this:
                 1       -> indicator that header has begun
                 FE8 Spell Association Editor by Vennobennu  -> label
@@ -63,11 +74,14 @@ pub fn parse_table_path(path: &std::path::Path) -> Result<NmmTable, NmmParseErro
                 NULL    -> txt file name
             */
             match line_number {
-                0 => table.title = line.to_string(),
-                1 => table.offset = line.parse::<u32>().unwrap(),
-                2 => table.entry_count = line.parse::<u32>().unwrap(),
-                3 => table.entry_size = line.parse::<u32>().unwrap(),
-                4 => {
+                1 => table.title = line.to_string(),
+                2 => {
+                    let cleaned_hex = line.strip_prefix("0x").unwrap_or(line);
+                    table.offset = u32::from_str_radix(cleaned_hex, 16).unwrap();
+                }
+                3 => table.entry_count = line.parse::<u32>().unwrap(),
+                4 => table.entry_size = line.parse::<u32>().unwrap(),
+                5 => {
                     if line.to_string() != "NULL" {
                         //TODO: At this point we need to parse the txt files
                         // parse_txt_file(line)
@@ -91,36 +105,33 @@ pub fn parse_table_path(path: &std::path::Path) -> Result<NmmTable, NmmParseErro
            Item List.txt   -> txt file name (Can be NULL)
         */
         if reading_body {
+            line_number += 1;
             match line_number {
-                0 => {
+                1 => {
                     table.fields.push(NmmField::new());
                     table.fields.last_mut().unwrap().label = line.to_string();
                 }
-                1 => {
+                2 => {
                     table.fields.last_mut().unwrap().offset = line.parse::<u32>().unwrap();
                 }
-                2 => {
+                3 => {
                     table.fields.last_mut().unwrap().width = line.parse::<u8>().unwrap();
                 }
-                3 => match line {
+                4 => match line {
                     // Checking whether value is hex or decimal
                     "NDDU" | "NEDU" | "NEDS" => {
                         table.fields.last_mut().unwrap().kind = NmmFieldKind::Decimal
                     }
                     _ => table.fields.last_mut().unwrap().kind = NmmFieldKind::Hex,
                 },
-                4 => {
+                5 => {
                     // We'll want to parse the txt file here if not null.
-                    line_number = 0;
                 }
                 _ => {
                     line_number = 0;
+                    continue 'line_read;
                 }
             }
-        }
-
-        if line.starts_with("1") && !reading_header {
-            reading_header = true;
         }
     }
 
