@@ -1,0 +1,4 @@
+error: failed to parse manifest at `/Users/junearnen/Documents/GBA-Rom-Explorer/Cargo.toml`
+
+Caused by:
+  this virtual manifest specifies a `dependencies` section, which is not allowed
