@@ -3,3 +3,4 @@ docs/*
 *.timestamp
 /target/
 /crates/fe-nmm/target
+*.DS_Store
