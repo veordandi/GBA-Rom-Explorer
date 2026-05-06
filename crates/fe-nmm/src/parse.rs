@@ -92,7 +92,9 @@ pub fn parse_table(input: &str) -> Result<NmmTable, NmmParseError> {
     table.offset = cursor.expect_uint()?;
     table.entry_count = cursor.expect_uint()?;
     table.entry_size = cursor.expect_uint()?;
-    // Add something here to parse the txt files
+    table.entry_names_ref = parse_enum_ref(cursor.expect()?);
+    let _reserved = cursor.expect()?; // This one is a bit weird. It will _always_ be null, but like the section above,
+    // it saves us a lot more time to handle it here than inside the cursor loop
 
     // Can do this as opposed to doing while cursor.position < cursor.lines.len()
     // Looks cleaner, and means we're checking the value we'll be using before going into the loop
@@ -106,8 +108,6 @@ pub fn parse_table(input: &str) -> Result<NmmTable, NmmParseError> {
         field.kind = cursor.expect_data_type()?;
         field.dropdown_ref = parse_enum_ref(cursor.expect()?);
         table.fields.push(field);
-        let _reserved = cursor.expect()?; // This one is a bit weird. It will _always_ be null, but like the section above,
-        // it saves us a lot more time to handle it here than inside the cursor loop
     }
 
     Ok(table)
