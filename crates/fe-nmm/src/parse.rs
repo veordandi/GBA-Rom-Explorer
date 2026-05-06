@@ -73,6 +73,18 @@ pub fn parse_table_path(path: &Path) -> Result<NmmTable, NmmParseError> {
 pub fn parse_table(input: &str) -> Result<NmmTable, NmmParseError> {
     let mut cursor = LineCursor::new(input);
 
+    // This is really just here to grab the leading 1 in the file that signifies the header starting. We don't
+    // want to put the handling of this in the loop logic in the wrapper, because then it will check for an extra
+    // if statement _every_ time it looks at contents as opposed to just running the one time
+    let module_count = cursor.expect_uint()?;
+    if module_count != 1 {
+        return Err(NmmParseError::BadLine {
+            line: cursor.last_consumed_line,
+            expected: "module count of 1",
+            found: module_count.to_string(),
+        });
+    }
+
     // The cursor handles iterating over these, which means we don't need to put it in a loop here,
     // it handles all of that by +=1 the position
     let mut table = NmmTable::new();
@@ -92,11 +104,27 @@ pub fn parse_table(input: &str) -> Result<NmmTable, NmmParseError> {
         field.width = cursor.expect_uint()? as u8; // Nifty trick here, you can cast u32 down to a u8. (would truncate if value was high enough)
         // in other contexts, could do let x = y.try_into().expect("Value out of range!"); to cast w/error handling
         field.kind = cursor.expect_data_type()?;
-        // field.dropdown_ref = cursor.expect_enum_ref()?; TODO: Figure out how we're formatting the txt refs
+        field.dropdown_ref = parse_enum_ref(cursor.expect()?);
         table.fields.push(field);
+        let _reserved = cursor.expect()?; // This one is a bit weird. It will _always_ be null, but like the section above,
+        // it saves us a lot more time to handle it here than inside the cursor loop
     }
 
     Ok(table)
+}
+
+// We're using this to parse the enum as oppposed to parsing it in the LineCursor struct due to how the expect() structure works.
+// Essentially we need to return an Option<EnumRef> out of this for proper assignment to an EnumRef type field. The Cursor methods
+// only return a Result<T,E> object, so we'll have the code above grab that, and pass it here if no error surfaces.
+fn parse_enum_ref(s: &str) -> Option<EnumRef> {
+    if s.trim() == "NULL" {
+        None
+    } else {
+        Some(EnumRef {
+            name: s.trim().to_string(),
+            resolved: None,
+        })
+    }
 }
 
 // Oddly enough, this seems to be a fairly common design pattern. Instead of using a numerical iterator,
@@ -120,14 +148,17 @@ impl<'a> LineCursor<'a> {
 
     // Consume blanks and `#`-comments and return the next meaningful line, trimmed.
     fn next_meaningful(&mut self) -> Option<&'a str> {
-        let line = self.last_consumed_line;
         // This one is pretty simple, we just skip over a line if it's a comment or blank
-        if self.lines[line].starts_with('#') || self.lines[line] == "" {
+        while self.position < self.lines.len() {
+            let line = self.lines[self.position].trim();
             self.position += 1;
-            self.last_consumed_line += 1;
-            return None;
+            if line.starts_with('#') || line == "" {
+                continue; // We want to skip these lines, and they won't count as last consumed, because there was no meaningful data there
+            } else {
+                self.last_consumed_line += 1;
+                return Some(self.lines[self.position - 1].trim());
+            }
         }
-
         None
     }
 
@@ -185,22 +216,4 @@ impl<'a> LineCursor<'a> {
             }),
         }
     }
-
-    /* This is mapping for the txt file, we'll get this once we make sure the reworked version of the initial functionality works
-    fn expect_enum_ref(&self) -> Result<NmmFieldDataType, NmmParseError> {
-        let s = self.expect()?;
-        match s {
-            "NULL" => NmmParseError::BadLine {
-                line: self.position,
-                expected: "Type Enum",
-                found: "Null",
-            },
-            _ => Some(EnumRef {
-                name: s.trim().to_string(),
-                resolved: None,
-            }),
-        }
-    }
-
-    */
 }

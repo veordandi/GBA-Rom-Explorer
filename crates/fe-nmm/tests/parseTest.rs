@@ -6,13 +6,11 @@ mod parse_test {
     use super::*;
 
     #[test]
-    fn test_parse_nmm_file() {
+    fn test_parse_nmm_file_successful() {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("tests/fixtures/FE8_Spell_Association_Editor.nmm");
         let result = parse_table_path(&path);
         let table = result.unwrap();
-
-        //TODO: If we get an error back we need to handle that
 
         // Validate that the header was parsed properly
         assert_eq!("FE8 Spell Association Editor by Vennobennu", table.title);
@@ -48,4 +46,7 @@ mod parse_test {
         // Validate that we parsed the txt file in correctly.
         // Check against one w/hexes and one without
     }
+
+    #[test]
+    fn parse_nmm_file_failure() {}
 }
