@@ -1,5 +1,5 @@
 // tests to verify that parsing works as expected.
-use fe_nmm::enums::NmmFieldKind;
+use fe_nmm::enums::NmmFieldDataType;
 use fe_nmm::parse::*;
 #[cfg(test)]
 mod parse_test {
@@ -33,14 +33,14 @@ mod parse_test {
         assert_eq!("Ranged Animation to Use", hex_example.label);
         assert_eq!(4, hex_example.offset);
         assert_eq!(1, hex_example.width);
-        assert_eq!(NmmFieldKind::Hex, hex_example.kind);
+        assert_eq!(NmmFieldDataType::Hex, hex_example.kind);
 
         // Dec example
         let dec_example = &table.fields[1];
         assert_eq!("No. of Chars to Display (1 or 2)", dec_example.label);
         assert_eq!(2, dec_example.offset);
         assert_eq!(2, dec_example.width);
-        assert_eq!(NmmFieldKind::Decimal, dec_example.kind);
+        assert_eq!(NmmFieldDataType::Decimal, dec_example.kind);
 
         // Update this once we get text parsing
         // assert_eq!(None, text_example.dropdown_ref);

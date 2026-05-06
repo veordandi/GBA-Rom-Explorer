@@ -38,7 +38,7 @@ pub struct NmmField {
     pub label: String,
     pub offset: u32,                   // Byte offset inside the entry
     pub width: u8,                     // width in bytes, always either 1/2/4
-    pub kind: NmmFieldKind,            // Whether dropdown or free entry
+    pub kind: NmmFieldDataType,        // Whether dropdown or free entry
     pub dropdown_ref: Option<EnumRef>, // hex or dec
 }
 
@@ -48,7 +48,7 @@ impl NmmField {
             label: String::new(),
             offset: 0,
             width: 0,
-            kind: NmmFieldKind::Hex,
+            kind: NmmFieldDataType::Hex,
             dropdown_ref: None,
         }
     }

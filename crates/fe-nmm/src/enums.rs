@@ -6,7 +6,7 @@
 // All of these come down to either a Hex or Decimal value, and will either be free input (no txt)
 // or a drowpdown that has available options stored in the correlating txt file.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub enum NmmFieldKind {
+pub enum NmmFieldDataType {
     Hex,
     Decimal,
 }
