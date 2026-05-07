@@ -41,7 +41,7 @@ mod parse_test {
     }
 
     #[test]
-    fn parse_nmm_file_failure() {
+    fn parse_nmm_file_invalid_digit_failure() {
         let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("tests/fixtures/malformed_header.nmm");
         let result = parse_table_path(&path);
@@ -52,6 +52,23 @@ mod parse_test {
             NmmParseError::BadInt { line, source } => {
                 assert_eq!(1, line);
                 assert_eq!(IntErrorKind::InvalidDigit, *source.kind())
+            }
+            _ => panic!("unexpected error: {:?}", unwrapped_err),
+        }
+    }
+
+    #[test]
+    fn parse_nmm_file_unknown_kind_failure() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/unknown_kind.nmm");
+        let result = parse_table_path(&path);
+        // Not sure how the error message comes back?
+        assert!(result.is_err());
+        let unwrapped_err = result.unwrap_err();
+        match unwrapped_err {
+            NmmParseError::UnknownKind { line, tag } => {
+                assert_eq!(14, line);
+                assert_eq!("ABCD", tag)
             }
             _ => panic!("unexpected error: {:?}", unwrapped_err),
         }
