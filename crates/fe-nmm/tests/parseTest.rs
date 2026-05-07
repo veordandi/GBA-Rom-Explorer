@@ -90,4 +90,20 @@ mod parse_test {
             _ => panic!("unexpected error: {:?}", unwrapped_err),
         }
     }
+
+    #[test]
+    fn parse_nmm_file_unexpected_eof_failure() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/only_comments.nmm");
+        let result = parse_table_path(&path);
+        // Not sure how the error message comes back?
+        assert!(result.is_err());
+        let unwrapped_err = result.unwrap_err();
+        match unwrapped_err {
+            NmmParseError::UnexpectedEof { line } => {
+                assert_eq!(1, line);
+            }
+            _ => panic!("unexpected error: {:?}", unwrapped_err),
+        }
+    }
 }
