@@ -132,7 +132,7 @@ fn parse_enum_ref(s: &str) -> Option<EnumRef> {
 struct LineCursor<'a> {
     lines: Vec<&'a str>,
     position: usize,           // index of next line to read
-    last_consumed_line: usize, // 1-based line number of the most recently consumed line
+    last_consumed_line: usize, // most recently used line
 }
 
 impl<'a> LineCursor<'a> {
@@ -204,7 +204,8 @@ impl<'a> LineCursor<'a> {
         })
     }
 
-    // We need one
+    // Checks the data type for the field. As commented elsewhere, it's either going to be a (hexa)decimal value w/a txt file or without
+    // we COULD add this in to the schema, but on the other hand, we'll probably only ever need to do this once while parsing to/from nmm format
     fn expect_data_type(&mut self) -> Result<NmmFieldDataType, NmmParseError> {
         let s = self.expect()?;
         match s {
