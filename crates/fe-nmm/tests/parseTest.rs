@@ -73,4 +73,21 @@ mod parse_test {
             _ => panic!("unexpected error: {:?}", unwrapped_err),
         }
     }
+
+    #[test]
+    fn parse_nmm_file_bad_int_failure() {
+        let path =
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/bad_int.nmm");
+        let result = parse_table_path(&path);
+        // Not sure how the error message comes back?
+        assert!(result.is_err());
+        let unwrapped_err = result.unwrap_err();
+        match unwrapped_err {
+            NmmParseError::BadInt { line, source } => {
+                assert_eq!(4, line);
+                assert_eq!(IntErrorKind::PosOverflow, *source.kind())
+            }
+            _ => panic!("unexpected error: {:?}", unwrapped_err),
+        }
+    }
 }
