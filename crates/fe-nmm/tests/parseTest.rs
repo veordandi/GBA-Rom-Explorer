@@ -1,6 +1,7 @@
 // tests to verify that parsing works as expected.
 use fe_nmm::enums::NmmFieldDataType;
 use fe_nmm::parse::*;
+use std::num::IntErrorKind;
 #[cfg(test)]
 mod parse_test {
     use super::*;
@@ -18,10 +19,8 @@ mod parse_test {
         assert_eq!(161, table.entry_count);
         assert_eq!(16, table.entry_size);
         assert_eq!(8, table.fields.len());
-
-        // Update these two once we get the txt parsing down
-        // assert_eq!(None, table.entry_names_ref);
-        // assert_eq!(None, table.source_path);
+        assert_eq!(None, table.entry_names_ref);
+        assert_eq!(path.to_str(), table.source_path.unwrap().to_str());
 
         // Validate that the body sections were parsed properly.
         // Want to check a Hex and Dec example.
@@ -39,14 +38,22 @@ mod parse_test {
         assert_eq!(2, dec_example.offset);
         assert_eq!(2, dec_example.width);
         assert_eq!(NmmFieldDataType::Decimal, dec_example.kind);
-
-        // Update this once we get text parsing
-        // assert_eq!(None, text_example.dropdown_ref);
-
-        // Validate that we parsed the txt file in correctly.
-        // Check against one w/hexes and one without
     }
 
     #[test]
-    fn parse_nmm_file_failure() {}
+    fn parse_nmm_file_failure() {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/malformed_header.nmm");
+        let result = parse_table_path(&path);
+        // Not sure how the error message comes back?
+        assert!(result.is_err());
+        let unwrapped_err = result.unwrap_err();
+        match unwrapped_err {
+            NmmParseError::BadInt { line, source } => {
+                assert_eq!(1, line);
+                assert_eq!(IntErrorKind::InvalidDigit, *source.kind())
+            }
+            _ => panic!("unexpected error: {:?}", unwrapped_err),
+        }
+    }
 }
