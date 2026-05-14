@@ -11,6 +11,15 @@ pub enum NmmFieldDataType {
     Decimal,
 }
 
+// Need a better way to store the offset than a u8. We might end up with an odd offset when we bring
+// in modified roms.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum TableLocation<'a> {
+    Static(u32),
+    IndirectFrom(u32),
+    DiscoverByPattern(&'a [u8]),
+}
+
 // tracks txt files that have hexes as well as labels.
 // hex values stored as the key in the BTreeMap, with the label as the value.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]

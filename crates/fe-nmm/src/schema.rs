@@ -2,14 +2,16 @@
 use crate::enums::*;
 // Essentially one parsed nightmare module, header, body, and reference to txt file if applicable
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct NmmTable {
+pub struct NmmTable<'a> {
     pub title: String, // Header title
-    pub offset: u32,   // Offset from the start of the ROM
+
+    #[serde(borrow)]
+    // This is needed so that we can properly track the &'a [u8] vector from the TableLocation
+    pub offset: TableLocation<'a>, // Offset from the start of the ROM
+
     pub entry_count: u32,
     pub entry_size: u32,       // Size in bytes
     pub fields: Vec<NmmField>, // Field definitions from the body in *author order* (not byte order).
-
-    // Associated txt file giving a human label per entry, if any
     pub entry_names_ref: Option<EnumRef>,
 
     /// Path the schema was parsed from, for diagnostics and for resolving
@@ -18,11 +20,11 @@ pub struct NmmTable {
 }
 
 // NmmTable functions
-impl NmmTable {
+impl NmmTable<'_> {
     pub fn new() -> Self {
         Self {
             title: String::new(),
-            offset: 0,
+            offset: TableLocation::Static(0),
             entry_count: 0,
             entry_size: 0,
             fields: Vec::new(),
