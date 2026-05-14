@@ -1,7 +1,3 @@
-use std::fs::File;
-use std::io::BufReader;
-use std::io::Read;
-use std::path::Path;
 use thiserror::Error;
 
 // Error enums to keep track of what went wrong when attempting the lz77 parsing
