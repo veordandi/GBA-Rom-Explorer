@@ -1,5 +1,6 @@
 use crate::enums::*;
 use crate::schema::*;
+use std::fs::read_dir;
 use std::fs::read_to_string;
 use std::io::Error;
 use std::path::Path;
@@ -42,15 +43,31 @@ impl From<Error> for NmmParseError {
     }
 }
 
-pub fn parse_table_path<'a>(
-    path: &Path,
-    mut table: NmmTable<'a>,
-) -> Result<NmmTable<'a>, NmmParseError> {
+// This function takes in a path reference to the FE8NightmareModlues directory
+pub fn parse_all_nmm_files(path: &Path) -> Result<Vec<NmmTable>, NmmParseError> {
+    let nmm_directory =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data/nmm/Fe8NightmareModules");
+    let nmm_extension = "nmm";
+    let entries = read_dir(&nmm_directory)?;
+    let mut tables = Vec::new();
+    for file in entries {
+        let entry = file.unwrap();
+        let path = entry.path();
+        if path.extension().unwrap_or_default() == nmm_extension {
+            let table = parse_table_path(&path)?;
+            tables.push(table);
+        }
+    }
+
+    Ok(tables)
+}
+
+pub fn parse_table_path(path: &Path) -> Result<NmmTable, NmmParseError> {
     let contents = read_to_string(path).map_err(|source| NmmParseError::Io {
         path: path.to_owned(),
         source,
     })?;
-    table = parse_table(&contents)?; //TODO: Fix this later, my head hurts right now
+    let mut table = parse_table(&contents)?; //TODO: Fix this later, my head hurts right now
     table.source_path = Some(path.to_owned());
     Ok(table)
 }

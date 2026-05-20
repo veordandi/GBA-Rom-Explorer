@@ -2,12 +2,10 @@
 use crate::enums::*;
 // Essentially one parsed nightmare module, header, body, and reference to txt file if applicable
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub struct NmmTable<'a> {
+pub struct NmmTable {
     pub title: String, // Header title
 
-    #[serde(borrow)]
-    // This is needed so that we can properly track the &'a [u8] vector from the TableLocation
-    pub offset: TableLocation<'a>, // Offset from the start of the ROM
+    pub offset: TableLocation, // Offset from the start of the ROM
 
     pub entry_count: u32,
     pub entry_size: u32,       // Size in bytes
@@ -20,7 +18,7 @@ pub struct NmmTable<'a> {
 }
 
 // NmmTable functions
-impl NmmTable<'_> {
+impl NmmTable {
     pub fn new() -> Self {
         Self {
             title: String::new(),

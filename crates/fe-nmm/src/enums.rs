@@ -13,11 +13,11 @@ pub enum NmmFieldDataType {
 
 // Need a better way to store the offset than a u8. We might end up with an odd offset when we bring
 // in modified roms.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
-pub enum TableLocation<'a> {
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum TableLocation {
     Static(u32),
     IndirectFrom(u32),
-    DiscoverByPattern(&'a [u8]),
+    DiscoverByPattern(Vec<u8>),
 }
 
 // tracks txt files that have hexes as well as labels.

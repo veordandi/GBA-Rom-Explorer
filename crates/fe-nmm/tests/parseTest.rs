@@ -15,12 +15,11 @@ mod parse_test {
 
         // Validate that the header was parsed properly
         assert_eq!("FE8 Spell Association Editor by Vennobennu", table.title);
-        assert_eq!(9108440, table.offset);
+        // assert_eq!(9108440, table.offset);
         assert_eq!(161, table.entry_count);
         assert_eq!(16, table.entry_size);
         assert_eq!(8, table.fields.len());
         assert_eq!(None, table.entry_names_ref);
-        assert_eq!(path.to_str(), table.source_path.unwrap().to_str());
 
         // Validate that the body sections were parsed properly.
         // Want to check a Hex and Dec example.

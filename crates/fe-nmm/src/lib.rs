@@ -2,4 +2,4 @@
 pub mod enums;
 pub mod parse;
 mod registry;
-mod schema;
+pub mod schema;
