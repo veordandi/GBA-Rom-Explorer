@@ -3,21 +3,31 @@ use std::path::Path;
 
 use crate::{huffman_decompression::decompress_huffman, lz77_decompression::decompress_lz77};
 
+const NMM_EXTENSION: &str = "nmm";
+
 // important things to be aware of with the overall ROM format.
 // Memory ranges from 0x08000000 to 0x08080000 (32MB ROM)
 // offset 1 is 0x08000001, so on and so forth. This is how we know where
 // unused memory is, since we know the beginning and ending bounds of memory
 pub fn translate_rom(path: &Path) -> Result<String, std::io::Error> {
+    // Read the bytes of the ROM
     let rom: Vec<u8> = std::fs::read(path).unwrap();
+
+    // Read the .nmm files in the NMM directory
+    let nmm_directory =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("/data/nmm/FE8NightmareModules");
 
     let entries = fs::read_dir(&nmm_directory)?;
     for file in entries {
         let entry = file.unwrap();
-        let path = entry.path();
-        if path.extension().and_then(|e| e.to_str()) == Some(nmm_extension) {
+        let path_buf = entry.path();
+        if path_buf.extension().and_then(|e| e.to_str()) == Some(NMM_EXTENSION) {
             //If this file is a .nmm file, then we want to go through and do the thing
             // Locate the byte range of a single field within a single entry.
             // `table` and `field` come from the fe-nmm parser; entry_idx is which row.
+
+            let result = fe_nmm::parse::parse_table_path(path_buf.as_path());
+            let table = result.unwrap();
             let row_start =
                 (table.offset as usize) + (entry_idx as usize) * (table.entry_size as usize);
             let field_start = row_start + field.offset as usize;
@@ -36,13 +46,12 @@ pub fn translate_rom(path: &Path) -> Result<String, std::io::Error> {
             // point at LZ77 data — could be raw bytes, Huffman, a sub-table, or junk.
             assert_eq!(blob[0], 0x10, "expected LZ77 marker, got {:#x}", blob[0]);
 
-            // Decompress. fe-compression::lz77_decompress is what you'll write.
             let mut payload;
 
             match blob[0] {
                 0x10 => payload = decompress_lz77(blob).unwrap(),
                 0x20 | 0x28 => payload = decompress_huffman(blob).unwrap(),
-                (_) => None,
+                (_) => (),
             }
         }
     }

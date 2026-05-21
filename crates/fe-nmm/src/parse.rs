@@ -43,31 +43,12 @@ impl From<Error> for NmmParseError {
     }
 }
 
-// This function takes in a path reference to the FE8NightmareModlues directory
-pub fn parse_all_nmm_files(path: &Path) -> Result<Vec<NmmTable>, NmmParseError> {
-    let nmm_directory =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data/nmm/Fe8NightmareModules");
-    let nmm_extension = "nmm";
-    let entries = read_dir(&nmm_directory)?;
-    let mut tables = Vec::new();
-    for file in entries {
-        let entry = file.unwrap();
-        let path = entry.path();
-        if path.extension().unwrap_or_default() == nmm_extension {
-            let table = parse_table_path(&path)?;
-            tables.push(table);
-        }
-    }
-
-    Ok(tables)
-}
-
 pub fn parse_table_path(path: &Path) -> Result<NmmTable, NmmParseError> {
     let contents = read_to_string(path).map_err(|source| NmmParseError::Io {
         path: path.to_owned(),
         source,
     })?;
-    let mut table = parse_table(&contents)?; //TODO: Fix this later, my head hurts right now
+    let mut table = parse_table(&contents)?;
     table.source_path = Some(path.to_owned());
     Ok(table)
 }
