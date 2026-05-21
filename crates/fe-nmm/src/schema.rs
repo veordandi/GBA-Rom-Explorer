@@ -4,12 +4,12 @@ use crate::enums::*;
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct NmmTable {
     pub title: String, // Header title
-    pub offset: u32,   // Offset from the start of the ROM
+
+    pub offset: TableLocation, // Offset from the start of the ROM
+
     pub entry_count: u32,
     pub entry_size: u32,       // Size in bytes
     pub fields: Vec<NmmField>, // Field definitions from the body in *author order* (not byte order).
-
-    // Associated txt file giving a human label per entry, if any
     pub entry_names_ref: Option<EnumRef>,
 
     /// Path the schema was parsed from, for diagnostics and for resolving
@@ -22,7 +22,7 @@ impl NmmTable {
     pub fn new() -> Self {
         Self {
             title: String::new(),
-            offset: 0,
+            offset: TableLocation::Static(0),
             entry_count: 0,
             entry_size: 0,
             fields: Vec::new(),

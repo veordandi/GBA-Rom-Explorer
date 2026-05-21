@@ -1,5 +1,6 @@
 use crate::enums::*;
 use crate::schema::*;
+use std::fs::read_dir;
 use std::fs::read_to_string;
 use std::io::Error;
 use std::path::Path;
@@ -42,12 +43,31 @@ impl From<Error> for NmmParseError {
     }
 }
 
+// This function takes in a path reference to the FE8NightmareModlues directory
+pub fn parse_all_nmm_files(path: &Path) -> Result<Vec<NmmTable>, NmmParseError> {
+    let nmm_directory =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data/nmm/Fe8NightmareModules");
+    let nmm_extension = "nmm";
+    let entries = read_dir(&nmm_directory)?;
+    let mut tables = Vec::new();
+    for file in entries {
+        let entry = file.unwrap();
+        let path = entry.path();
+        if path.extension().unwrap_or_default() == nmm_extension {
+            let table = parse_table_path(&path)?;
+            tables.push(table);
+        }
+    }
+
+    Ok(tables)
+}
+
 pub fn parse_table_path(path: &Path) -> Result<NmmTable, NmmParseError> {
     let contents = read_to_string(path).map_err(|source| NmmParseError::Io {
         path: path.to_owned(),
         source,
     })?;
-    let mut table = parse_table(&contents)?;
+    let mut table = parse_table(&contents)?; //TODO: Fix this later, my head hurts right now
     table.source_path = Some(path.to_owned());
     Ok(table)
 }
@@ -89,7 +109,7 @@ pub fn parse_table(input: &str) -> Result<NmmTable, NmmParseError> {
     // it handles all of that by +=1 the position
     let mut table = NmmTable::new();
     table.title = cursor.expect()?.to_string();
-    table.offset = cursor.expect_uint()?;
+    table.offset = parse_table_location(cursor.expect()?)?;
     table.entry_count = cursor.expect_uint()?;
     table.entry_size = cursor.expect_uint()?;
     table.entry_names_ref = parse_enum_ref(cursor.expect()?);
@@ -111,6 +131,25 @@ pub fn parse_table(input: &str) -> Result<NmmTable, NmmParseError> {
     }
 
     Ok(table)
+}
+
+fn parse_table_location(s: &str) -> Result<TableLocation, NmmParseError> {
+    let s = s.trim();
+    if let Some(hex) = s.strip_prefix("0x").or_else(|| s.strip_prefix("0X")) {
+        Ok(TableLocation::Static(
+            u32::from_str_radix(hex, 16).map_err(|source| NmmParseError::UnknownKind {
+                line: 1,
+                tag: s.to_string(),
+            })?,
+        ))
+    } else {
+        Ok(TableLocation::Static(s.parse::<u32>().map_err(
+            |source| NmmParseError::UnknownKind {
+                line: 1,
+                tag: s.to_string(),
+            },
+        )?))
+    }
 }
 
 // We're using this to parse the enum as oppposed to parsing it in the LineCursor struct due to how the expect() structure works.
