@@ -9,9 +9,6 @@ use crate::{huffman_decompression::decompress_huffman, lz77_decompression::decom
 // unused memory is, since we know the beginning and ending bounds of memory
 pub fn translate_rom(path: &Path) -> Result<String, std::io::Error> {
     let rom: Vec<u8> = std::fs::read(path).unwrap();
-    let nmm_directory =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../data/nmm/Fe8NightmareModules");
-    let nmm_extension = ".nmm";
 
     let entries = fs::read_dir(&nmm_directory)?;
     for file in entries {
@@ -51,5 +48,6 @@ pub fn translate_rom(path: &Path) -> Result<String, std::io::Error> {
     }
 
     //TODO: Come back to this, I don't know what we'll return from this yet.
+    // Theoretically this would be called by fe-tui so that the frontend can display the tables returned here to the frontentd.
     return Ok("".to_string());
 }

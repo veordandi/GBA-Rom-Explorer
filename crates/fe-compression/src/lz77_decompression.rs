@@ -17,6 +17,6 @@ pub enum lz77ParseError {
 // will help figure out what we have to work with, and what's coming in.
 // Have this open the gba file in data/gba and have a test dump the contents? That's gonna be a _lot_ of
 // data.
-pub fn decompress_lz77(blob: &[u8]) -> Result<Vec<u8>, lz77ParseError> {
+pub fn decompress_lz77(blob: Vec<u8>) -> Result<Vec<u8>, lz77ParseError> {
     Ok(Vec::new())
 }
