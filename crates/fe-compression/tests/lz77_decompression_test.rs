@@ -15,7 +15,7 @@ mod lz77_decompression_test {
 
         // Read the .nmm files in the NMM directory
         let nmm_directory =
-            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("/crates/fe-compression/tests/fixtures/");
+            std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("/crates/fe-compression/tests/data/");
 
         let entries = fs::read_dir(&nmm_directory)?;
         for file in entries {
@@ -50,7 +50,7 @@ mod lz77_decompression_test {
                 match blob[0] {
                     0x10 => payload = decompress_lz77(blob).unwrap(),
                     // 0x20 | 0x28 => payload = decompress_huffman(blob).unwrap(),
-                    (_) => (),
+                    _ => (),
                 }
             }
     }

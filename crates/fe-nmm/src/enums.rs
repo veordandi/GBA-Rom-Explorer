@@ -15,9 +15,9 @@ pub enum NmmFieldDataType {
 // in modified roms.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum TableLocation {
-    Static(u32),
-    IndirectFrom(u32),
-    DiscoverByPattern(Vec<u8>),
+    Static(u32),                // Absolute offset from the beginning of the rom
+    IndirectFrom(u32),          // Read a 4-byte pointer at offset X to find the table
+    DiscoverByPattern(Vec<u8>), // search the ROM for these signature bytes to find the table
 }
 
 // tracks txt files that have hexes as well as labels.
